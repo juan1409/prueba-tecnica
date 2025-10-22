@@ -1,0 +1,90 @@
+### 🔍 PRUEBAS UNITARIAS DE LA API - FECHAS HÁBILES COLOMBIA
+# Autor: Juan David Ortega
+# Proyecto: working-days-colombia
+# Objetivo: validar la API que calcula fechas hábiles en Colombia
+# Zona horaria de cálculo: America/Bogota
+# Salida esperada: UTC con sufijo "Z" (ISO 8601)
+# Fecha de referencia: 2025 (para coherencia con días festivos del JSON oficial)
+# 
+# Instrucciones:
+# 1. Instalar extensión "REST Client" (Huachao Mao) en VS Code.
+# 2. Abrir este archivo test.http.
+# 3. Pulsar "Send Request" sobre cada bloque de prueba para verificar.
+
+####################################################################################
+
+### 🧩 TEST 0 - Error por falta de parámetros
+# Esperado: Error 400 InvalidParameters
+GET http://localhost:3000/api/working-date
+
+####################################################################################
+
+### 🕐 TEST 1 - Viernes 5:00 p.m. (COL) + 1 hora hábil
+# Entrada: date=2025-05-23T22:00:00Z  → equivale a viernes 5:00 p.m. hora Colombia
+# Lógica: fuera de horario → lunes 9:00 a.m.
+# Esperado: "2025-05-26T14:00:00Z" (lunes 9:00 a.m. COL)
+GET http://localhost:3000/api/working-date?hours=1&date=2025-05-23T22:00:00Z
+
+####################################################################################
+
+### 🕒 TEST 2 - Sábado 2:00 p.m. (COL) + 1 hora hábil
+# Entrada: date=2025-05-24T19:00:00Z → sábado 2:00 p.m.
+# Lógica: fin de semana → lunes 9:00 a.m.
+# Esperado: "2025-05-26T14:00:00Z"
+GET http://localhost:3000/api/working-date?hours=1&date=2025-05-24T19:00:00Z
+
+####################################################################################
+
+### 🗓️ TEST 3 - Martes 3:00 p.m. + 1 día + 4 horas
+# Entrada: date=2025-05-20T20:00:00Z (martes 3:00 p.m.)
+# Lógica: sumar 1 día → miércoles 3:00 p.m. + 4 horas hábiles → jueves 10:00 a.m.
+# Esperado: "2025-05-22T15:00:00Z"
+GET http://localhost:3000/api/working-date?days=1&hours=4&date=2025-05-20T20:00:00Z
+
+####################################################################################
+
+### ☀️ TEST 4 - Domingo 6:00 p.m. + 1 día hábil
+# Entrada: date=2025-05-25T23:00:00Z (domingo 6:00 p.m.)
+# Lógica: normaliza a lunes 8:00 a.m. → +1 día → martes 5:00 p.m.
+# Esperado: "2025-05-26T22:00:00Z"
+GET http://localhost:3000/api/working-date?days=1&date=2025-05-25T23:00:00Z
+
+####################################################################################
+
+### 💼 TEST 5 - Día laboral 8:00 a.m. + 8 horas
+# Entrada: date=2025-05-20T13:00:00Z (martes 8:00 a.m.)
+# Lógica: +8 horas hábiles = 5:00 p.m.
+# Esperado: "2025-05-20T22:00:00Z"
+GET http://localhost:3000/api/working-date?hours=8&date=2025-05-20T13:00:00Z
+
+####################################################################################
+
+### 📆 TEST 6 - Día laboral 8:00 a.m. + 1 día
+# Entrada: date=2025-05-20T13:00:00Z (martes 8:00 a.m.)
+# Lógica: +1 día hábil = miércoles 8:00 a.m.
+# Esperado: "2025-05-21T13:00:00Z"
+GET http://localhost:3000/api/working-date?days=1&date=2025-05-20T13:00:00Z
+
+####################################################################################
+
+### ☕ TEST 7 - Día laboral 12:30 p.m. + 1 día
+# Entrada: date=2025-05-20T17:30:00Z (martes 12:30 p.m.)
+# Lógica: normaliza hacia atrás a 12:00 → +1 día → miércoles 12:00 p.m.
+# Esperado: "2025-05-21T17:00:00Z"
+GET http://localhost:3000/api/working-date?days=1&date=2025-05-20T17:30:00Z
+
+####################################################################################
+
+### 🕓 TEST 8 - Día laboral 11:30 a.m. + 3 horas
+# Entrada: date=2025-05-20T16:30:00Z (martes 11:30 a.m.)
+# Lógica: +3 horas hábiles → 3:30 p.m.
+# Esperado: "2025-05-20T20:30:00Z"
+GET http://localhost:3000/api/working-date?hours=3&date=2025-05-20T16:30:00Z
+
+####################################################################################
+
+### ✝️ TEST 9 - Caso Semana Santa (festivos 17 y 18 abril)
+# Entrada: date=2025-04-10T15:00:00Z (jueves 10 abril 10:00 a.m. COL)
+# Lógica: +5 días hábiles → salta 17 y 18 abril → +4 horas hábiles = 21 abril 3:00 p.m.
+# Esperado: "2025-04-21T20:00:00Z"
+GET http://localhost:3000/api/working-date?days=5&hours=4&date=2025-04-10T15:00:00Z
